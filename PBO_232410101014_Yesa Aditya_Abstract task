@@ -1,0 +1,206 @@
+using System;
+
+abstract public class Robot
+{
+    public string Nama;
+    public int Energi;
+    public int Armor;
+    public int Serangan;
+
+    public Robot(string nama, int energi, int armor, int serangan)
+    {
+        Nama = nama;
+        Energi = energi;
+        Armor = armor;
+        Serangan = serangan;
+    }
+
+    public virtual void Serang(Robot target)
+    {
+        int damage = Serangan - target.Armor;
+        if (damage < 0) damage = 0;
+        target.Energi -= damage;
+        Console.WriteLine($"{Nama} menyerang {target.Nama}, mengurangi {damage} energi.");
+    }
+
+    public abstract void GunakanKemampuan(IKemampuan kemampuan, Robot target);
+
+    public virtual void PulihkanEnergi()
+    {
+        Energi += 10;
+        Console.WriteLine($"{Nama} memulihkan 10 energi.");
+    }
+
+    public void CetakInformasi()
+    {
+        Console.WriteLine($"Nama : {Nama}");
+        Console.WriteLine($"Energi : {Energi}");
+        Console.WriteLine($"Armor : {Armor}");
+        Console.WriteLine($"Serangan : {Serangan}");
+    }
+}
+
+public class RobotTempur : Robot
+{
+    public RobotTempur(string nama, int energi, int armor, int serangan)
+        : base(nama, energi, armor, serangan) { }
+    public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
+    {
+        kemampuan.GunakanKemampuan(this, target);
+    }
+}
+
+public class BosRobot : Robot
+{
+    public int Pertahanan;
+
+    public BosRobot(string nama, int energi, int armor, int serangan, int pertahanan) : base(nama, energi, armor, serangan)
+    {
+        Pertahanan = pertahanan;
+    }
+
+    public void Diserang(Robot penyerang)
+    {
+        int damage = penyerang.Serangan - Pertahanan;
+        if (damage < 0) damage = 0;
+        Energi -= damage;
+        Console.WriteLine($"{Nama} diserang oleh {penyerang.Nama}, mengurangi {damage} energi.");
+    }
+
+    public void mati()
+    {
+        if (Energi <= 0)
+        {
+            Console.WriteLine($"{Nama} telah mati.");
+        }
+    }
+    public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
+    {
+        kemampuan.GunakanKemampuan(this, target);
+    }
+}
+
+public interface IKemampuan
+{
+    string Nama { get; }
+    int Cooldown { get; }
+    int CooldownAktif { get; set; }
+    void GunakanKemampuan(Robot pengguna, Robot target);
+}
+
+public class Perbaikan : IKemampuan
+{
+    public string Nama
+    {
+        get { return "Repair"; }
+    }
+    public int Cooldown { get; } = 2;
+    public int CooldownAktif { get; set; }
+    public void GunakanKemampuan(Robot pengguna, Robot target)
+    {
+        if (CooldownAktif > 0)
+        {
+            Console.WriteLine($"{pengguna.Nama} tidak dapat menggunakan {Nama}. Cooldown: {CooldownAktif} giliran tersisa.");
+            return;
+        }
+
+        pengguna.Energi += 20;
+        Console.WriteLine($"{pengguna.Nama} memulihkan 20 energi.");
+        CooldownAktif = Cooldown;
+    }
+}
+
+public class SeranganListrik : IKemampuan
+{
+    public string Nama
+    {
+        get { return "Electric Shock"; }
+    }
+    public int Cooldown { get; } = 3;
+    public int CooldownAktif { get; set; }
+    public void GunakanKemampuan(Robot pengguna, Robot target)
+    {
+        if (CooldownAktif > 0)
+        {
+            Console.WriteLine($"{pengguna.Nama} tidak dapat menggunakan {Nama}. Cooldown: {CooldownAktif} giliran tersisa.");
+            return;
+        }
+
+        int damage = pengguna.Serangan * 2;
+        target.Energi -= damage;
+        Console.WriteLine($"{pengguna.Nama} menembakkan {Nama}, memberi {damage} damage pada {target.Nama}.");
+        CooldownAktif = Cooldown;
+    }
+}
+
+public class SeranganPlasma : IKemampuan
+{
+    public string Nama
+    {
+        get { return "Plasma Cannon"; }
+    }
+    public int Cooldown { get; } = 5;
+    public int CooldownAktif { get; set; }
+    public void GunakanKemampuan(Robot pengguna, Robot target)
+    {
+        if (CooldownAktif > 0)
+        {
+            Console.WriteLine($"{pengguna.Nama} tidak dapat menggunakan {Nama}. Cooldown: {CooldownAktif} giliran tersisa.");
+            return;
+        }
+
+        int damage = pengguna.Serangan * 2;
+        target.Energi -= damage;
+        Console.WriteLine($"{pengguna.Nama} menembakkan {Nama}, memberi {damage} damage pada {target.Nama}.");
+        CooldownAktif = Cooldown;
+    }
+}
+
+public class PertahananSuper : IKemampuan
+{
+    public string Nama
+    {
+        get { return "Super Shield"; }
+    }
+    public int Cooldown { get; } = 4;
+    public int CooldownAktif { get; set; }
+    public void GunakanKemampuan(Robot pengguna, Robot target)
+    {
+        if (CooldownAktif > 0)
+        {
+            Console.WriteLine($"{pengguna.Nama} tidak dapat menggunakan {Nama}. Cooldown: {CooldownAktif} giliran tersisa.");
+            return;
+        }
+        pengguna.Armor += 10;
+        Console.WriteLine($"{pengguna.Nama} meningkatkan armor sebesar 10 poin.");
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        RobotTempur robotA = new RobotTempur("Robot A", 100, 15, 25);
+        BosRobot bosrobot = new BosRobot("Bos Robot", 55, 20, 30, 25);
+        Console.WriteLine("Informasi Robot A: ");
+        robotA.CetakInformasi();
+        Console.WriteLine("\nInformasi Bos robot: ");
+        bosrobot.CetakInformasi();
+        Console.WriteLine("\nPertarungan Dimulai");
+
+        robotA.Serang(bosrobot);
+        robotA.CetakInformasi();
+        Console.WriteLine("");
+        bosrobot.CetakInformasi();
+        Console.WriteLine("");
+
+        IKemampuan seranganListrik = new SeranganListrik();
+        robotA.GunakanKemampuan(seranganListrik, bosrobot);
+        robotA.CetakInformasi();
+        Console.WriteLine("");
+        bosrobot.CetakInformasi();
+        Console.WriteLine("");
+        bosrobot.mati();
+    }
+        
+}
